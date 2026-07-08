@@ -22,14 +22,17 @@ ticketing/
 │   └── preview.html        # QC harness (fake storefront parent), deployed with public/
 ├── deploy/
 │   └── nginx.conf.example  # example server block: serve public/ + CSP frame-ancestors
-├── storefront/
-│   └── embed-snippet.html  # reference stub each storefront will use (NOT applied yet)
 ├── .claude/launch.json     # DEV-ONLY preview server config (serves public/)
 └── PLAN.md                 # the full implementation plan
 ```
 
-The files in `public/` are edited here (a normal dev task in this repo) and
-deployed to the app server as static files — there is no in-app file editor.
+This whole directory IS the app-server deliverable: deploy it to
+`/var/www/ticketing` and nginx serves `public/`. The files in `public/` are
+edited here (a normal dev task) and deployed as static files — no in-app editor.
+
+> The **per-storefront embed** (the stub that goes into each Four51 storefront)
+> lives in the sibling `../storefront-ticketing` directory, not here — it is not
+> deployed to the app server.
 
 ## Data flow (runtime / submit)
 

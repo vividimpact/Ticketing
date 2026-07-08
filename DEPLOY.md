@@ -22,7 +22,9 @@ Key facts that shape these steps:
 ## 1. Git repo
 
 - [ ] Create the `ticketing` repo (**TO CONFIRM:** name/org) and commit:
-      `public/`, `deploy/`, `storefront/`, `README.md`, `PLAN.md`, `DEPLOY.md`.
+      `public/`, `deploy/`, `README.md`, `PLAN.md`, `DEPLOY.md`. (The
+      per-storefront embed is intentionally NOT here — it lives in the sibling
+      `storefront-ticketing` directory.)
 - [ ] `.claude/launch.json` is DEV-ONLY (local preview server). Committing it is
       harmless — it lives outside `public/` so it is never served — but add a
       `.gitignore` if you'd rather leave it out. (There is no `.gitignore` yet.)
@@ -49,9 +51,60 @@ Key facts that shape these steps:
 - [ ] (Optional) Protect `/ticketing/preview.html` — it's a QC tool on a public
       host. Consider basic auth / IP allowlist via a dedicated nginx location.
 
-**Test vs prod app server:** if there is a separate test app-server host, deploy
-there first and point `teststore.four51.com` at it. **TO CONFIRM:** test
-app-server host.
+### Environment routing (test vs prod)
+
+The **storefront host** decides the environment, and the iframe uses that to pick
+which Vampire API to call. Nothing about test-vs-prod is hard-coded per copy of
+the iframe — the same deployed files serve both.
+
+How it flows:
+
+1. **Storefront decides `env` from its own host** (in the embed controller):
+
+   ```js
+   var env = (window.location.host === 'teststore.four51.com') ? 'test' : 'production';
+   ```
+
+   `teststore.four51.com` → `test`; every other storefront host → `production`.
+
+2. **Storefront passes `env`** to the iframe in the `ticketing:init` payload.
+
+3. **The iframe maps `env` → a Vampire base URL** (`VAMPIRE_BASE` in
+   `public/js/ticketing.js`) and sends every ticket call there:
+
+   | `env`        | Vampire base URL                          |
+   | ------------ | ----------------------------------------- |
+   | `test`       | `https://vampire.vividimpact.com/api-test` |
+   | `production` | `https://vampire.vividimpact.com/api`      |
+
+So a ticket opened from **`teststore.four51.com`** hits the Vampire **test** API,
+and the exact same iframe embedded in any production storefront hits the Vampire
+**production** API — driven entirely by the storefront host, matching the legacy
+`supportTicketCtrl.js` behavior.
+
+> **Endpoint note:** test currently uses the `/api-test` path on the same host
+> (`vampire.vividimpact.com/api-test`), which is what the legacy storefront used.
+> If test should instead go to a **separate host** like
+> `vampiretest.vividimpact.com`, that's a one-line change to `VAMPIRE_BASE.test`
+> in `public/js/ticketing.js` — tell me and I'll switch it.
+
+**Step by step:**
+
+- [ ] **Deploy `public/` to the TEST app-server host** (or the test path). This is
+      where the `teststore` iframe will be loaded from.
+- [ ] **Point the `teststore.four51.com` storefront** at it: set the iframe `src`
+      and `IFRAME_ORIGIN` in that storefront's controller to the test app-server
+      origin. (Its `env` resolves to `test` automatically from the host check.)
+- [ ] **Verify test routing:** open the ticket page on `teststore.four51.com`,
+      open DevTools → Network, and confirm the calls go to
+      `https://vampire.vividimpact.com/api-test/...` and return real test tickets.
+- [ ] **Deploy `public/` to the PROD app-server host** and point production
+      storefronts at it. Their `env` resolves to `production`, so the iframe calls
+      `https://vampire.vividimpact.com/api/...`.
+- [ ] **Verify prod routing** the same way on a production storefront.
+
+**TO CONFIRM:** the test app-server host (whether test uses a separate host/path
+or the same app server as prod).
 
 ---
 
@@ -78,7 +131,8 @@ setup. Only two things to check:
 ## 4. Storefronts (per storefront)
 
 This is a **swap**, not an add — the route (`/supportticket`) and controller name
-(`SupportTicketCtrl`) stay the same. Reference: `storefront/embed-snippet.html`.
+(`SupportTicketCtrl`) stay the same. Reference: the sibling `storefront-ticketing`
+directory (`embed-snippet.html`).
 
 - [ ] Replace `partials/supportTicket.html` with the iframe host.
 - [ ] Replace `SupportTicketCtrl` with the ~20-line postMessage bridge.

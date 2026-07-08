@@ -115,7 +115,7 @@ No PHP, no server-side secrets, and no in-app file editor are involved.
 
 ## Component 2 — Storefronts (future change; NOT applied now)
 
-Documented here and scaffolded in `storefront/embed-snippet.html` for when you
+Documented here and scaffolded in `../storefront-ticketing/embed-snippet.html` for when you
 choose to roll it out.
 
 - Keep the existing route `when('/supportticket', … 'partials/supportTicket.html',
@@ -196,7 +196,7 @@ Both sides validate origin. The iframe restricts accepted parents via
 
 1. **Build & stage.** Finish the files in this repo; deploy `public/` to the
    **test** app server; verify against Vampire test (`/api-test`).
-2. **Pilot one storefront.** Apply the `storefront/embed-snippet.html` change to a
+2. **Pilot one storefront.** Apply the `storefront-ticketing/embed-snippet.html` change to a
    single storefront (e.g. AA-Dermatology) pointing at the test app server.
    Verify: user info arrives, category tree renders, brand color applies, and
    create / add-note / list all work end-to-end, iframe resizes cleanly.
@@ -217,7 +217,7 @@ Both sides validate origin. The iframe restricts accepted parents via
 - [x] Brand color via `ticketing:init` `color` -> `--brand-theme`
 - [x] Storefront-matched styling (Bootstrap-3 look, Open Sans, modal)
 - [x] `deploy/nginx.conf.example` (static serving + CSP)
-- [x] `storefront/embed-snippet.html`
+- [x] `embed-snippet.html` (moved to the sibling `storefront-ticketing` directory)
 - [ ] Create GitHub repo and push. **TO CONFIRM** repo name/org.
 
 **App server**
