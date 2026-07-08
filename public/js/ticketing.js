@@ -43,11 +43,11 @@
   // that token means no new Vampire application is required.
   var VAMPIRE_TOKEN = '';
 
-  // Vampire base URLs, matching the storefront exactly: production is /api and
-  // test is the /api-test suffix on the same host (NOT a separate hostname).
+  // Vampire base URLs. Production uses the main host; test/demo uses the
+  // dedicated test host (vampiretest) — the defined route for testing and demos.
   var VAMPIRE_BASE = {
     production: 'https://vampire.vividimpact.com/api',
-    test: 'https://vampire.vividimpact.com/api-test'
+    test: 'https://vampiretest.vividimpact.com/api-test'
   };
 
   // Cross-origin parents allowed to initialize this iframe. Entries may use a

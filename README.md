@@ -45,8 +45,8 @@ Storefront page
 ```
 
 Test vs production is chosen by the `env` value the parent passes: `test` uses
-`https://vampire.vividimpact.com/api-test`, production uses
-`https://vampire.vividimpact.com/api` — matching the storefront exactly.
+`https://vampiretest.vividimpact.com/api-test` (the defined test/demo route),
+production uses `https://vampire.vividimpact.com/api`.
 
 ## Deploy to the app server
 

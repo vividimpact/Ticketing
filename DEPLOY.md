@@ -72,21 +72,19 @@ How it flows:
 3. **The iframe maps `env` → a Vampire base URL** (`VAMPIRE_BASE` in
    `public/js/ticketing.js`) and sends every ticket call there:
 
-   | `env`        | Vampire base URL                          |
-   | ------------ | ----------------------------------------- |
-   | `test`       | `https://vampire.vividimpact.com/api-test` |
-   | `production` | `https://vampire.vividimpact.com/api`      |
+   | `env`        | Vampire base URL                             |
+   | ------------ | -------------------------------------------- |
+   | `test`       | `https://vampiretest.vividimpact.com/api-test` |
+   | `production` | `https://vampire.vividimpact.com/api`        |
 
-So a ticket opened from **`teststore.four51.com`** hits the Vampire **test** API,
-and the exact same iframe embedded in any production storefront hits the Vampire
-**production** API — driven entirely by the storefront host, matching the legacy
-`supportTicketCtrl.js` behavior.
+So a ticket opened from **`teststore.four51.com`** hits the Vampire **test** host
+(`vampiretest`), and the exact same iframe embedded in any production storefront
+hits the Vampire **production** host — driven entirely by the storefront host.
 
-> **Endpoint note:** test currently uses the `/api-test` path on the same host
-> (`vampire.vividimpact.com/api-test`), which is what the legacy storefront used.
-> If test should instead go to a **separate host** like
-> `vampiretest.vividimpact.com`, that's a one-line change to `VAMPIRE_BASE.test`
-> in `public/js/ticketing.js` — tell me and I'll switch it.
+> **Endpoint note:** test/demo uses the dedicated test host
+> `vampiretest.vividimpact.com/api-test` (the defined test route). Production uses
+> `vampire.vividimpact.com/api`. Both are set in `VAMPIRE_BASE` in
+> `public/js/ticketing.js`.
 
 **Step by step:**
 
@@ -97,7 +95,7 @@ and the exact same iframe embedded in any production storefront hits the Vampire
       origin. (Its `env` resolves to `test` automatically from the host check.)
 - [ ] **Verify test routing:** open the ticket page on `teststore.four51.com`,
       open DevTools → Network, and confirm the calls go to
-      `https://vampire.vividimpact.com/api-test/...` and return real test tickets.
+      `https://vampiretest.vividimpact.com/api-test/...` and return real test tickets.
 - [ ] **Deploy `public/` to the PROD app-server host** and point production
       storefronts at it. Their `env` resolves to `production`, so the iframe calls
       `https://vampire.vividimpact.com/api/...`.
