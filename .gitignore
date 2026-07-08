@@ -1,0 +1,9 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+
+# Local Claude Code settings (launch.json is shared for the preview server)
+.claude/settings.local.json

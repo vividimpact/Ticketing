@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ticketing Demo — A Vivid Impact Storefront integration</title>
+    <style>
+        body { margin: 0; font-family: system-ui, sans-serif; background: #f0f2f5; color: #222; }
+        .preview-bar {
+            background: #ffffff; color: #222; padding: 12px 16px;
+            display: flex; flex-direction: column; gap: 10px;
+            font-size: 13px; border-bottom: 3px solid #5C2D91;
+        }
+        .preview-bar .bar-row { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+        .preview-bar .brand { display: flex; align-items: center; gap: 10px; }
+        .preview-bar .brand-logo { height: 34px; width: auto; display: block; }
+        .preview-bar strong { color: #5C2D91; }
+        .preview-bar label { display: flex; gap: 6px; align-items: center; }
+        .preview-bar select,
+        .preview-bar input[type="text"],
+        .preview-bar input[type="color"],
+        .preview-bar input[type="password"] {
+            padding: 3px 6px; border-radius: 3px; border: 1px solid #cbd5e1;
+            background: #fff; color: #222;
+        }
+        .preview-bar input[type="color"] { padding: 0; width: 34px; height: 26px; }
+        .preview-bar label.token { flex: 1 1 300px; }
+        .preview-bar label.token input { flex: 1; min-width: 180px; }
+        .preview-bar button {
+            padding: 4px 10px; border-radius: 3px; border: 0; cursor: pointer;
+            background: #5C2D91; color: #fff; font-weight: 600;
+        }
+        .frame-host { max-width: 900px; margin: 24px auto; background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,.15); border-radius: 6px; overflow: hidden; }
+        #ticketingFrame { width: 100%; border: 0; min-height: 600px; display: none; }
+        #preview-gate {
+            padding: 60px 24px; text-align: center; color: #6b7280; font-size: 15px;
+        }
+        #preview-gate .lock { font-size: 32px; display: block; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+    <div class="preview-bar">
+        <div class="bar-row">
+            <span class="brand">
+                <img class="brand-logo" src="images/vi-logo-nav.png" alt="Vivid Impact">
+                <span><strong>Ticketing Demo</strong> — A Vivid Impact Storefront integration</span>
+            </span>
+            <label>Company
+                <input type="text" id="inp-company" placeholder="type the exact company name">
+            </label>
+            <label>User
+                <select id="sel-user"></select>
+            </label>
+            <label>Color
+                <input type="color" id="inp-color">
+            </label>
+        </div>
+        <div class="bar-row">
+            <label class="token">Demo Token
+                <input type="password" id="inp-token" placeholder="paste demo token to enable preview">
+            </label>
+            <button id="btn-load">Load / Init preview</button>
+        </div>
+    </div>
+
+    <div class="frame-host">
+        <div id="preview-gate">
+            <span class="lock">&#128274;</span>
+            Enter the Demo Token above and click <b>Load / Init preview</b> to start.
+            <br>Nothing is loaded or initialized until a token is provided.
+        </div>
+        <iframe id="ticketingFrame"
+                src="about:blank"
+                title="Vivid Support Ticket"
+                referrerpolicy="no-referrer"></iframe>
+    </div>
+
+    <script>
+        // ---- Preview fixtures ------------------------------------------------
+        // Company is typed in free-form; one QC user drives submission testing.
+        // The payload shape mirrors what a storefront's SupportTicketCtrl hands
+        // the iframe: env, storefront, color, vampireToken, user{...}, categoryTree.
+        var MOCK_TREE = [
+            { Name: 'Brochures', SubCategories: [
+                { Name: 'Tri-Fold', SubCategories: [] },
+                { Name: 'Bi-Fold', SubCategories: [] }
+            ]},
+            { Name: 'Flyers', SubCategories: [] },
+            { Name: 'Business Cards', SubCategories: [
+                { Name: 'Standard', SubCategories: [] },
+                { Name: 'Premium', SubCategories: [] }
+            ]}
+        ];
+
+        // Single QC user for submission testing. (Its id is a placeholder — swap
+        // in the real Four51 user id if needed.)
+        var USERS = {
+            'qc': {
+                label: 'QC User (QC_user@vividimpact.com)',
+                id: 'QC_user@vividimpact.com',
+                firstName: 'QC',
+                lastName: 'User',
+                email: 'QC_user@vividimpact.com',
+                allowTicketing: true,
+                ticketingDashboard: true   // -> iframe loads tickets on init
+            }
+        };
+
+        var DEFAULT_COLOR = '#1d4f91';
+
+        var inpCompany = document.getElementById('inp-company');
+        var selUser = document.getElementById('sel-user');
+        var inpColor = document.getElementById('inp-color');
+        var inpToken = document.getElementById('inp-token');
+        var gate = document.getElementById('preview-gate');
+        var frame = document.getElementById('ticketingFrame');
+
+        function currentUser() { return USERS[selUser.value]; }
+
+        function populateUsers() {
+            Object.keys(USERS).forEach(function (key) {
+                var o = document.createElement('option');
+                o.value = key; o.textContent = USERS[key].label;
+                selUser.appendChild(o);
+            });
+        }
+
+        function buildPayload() {
+            var u = currentUser();
+            return {
+                type: 'ticketing:init',
+                payload: {
+                    env: 'test',
+                    storefront: 'demo.four51.com',
+                    color: inpColor.value,
+                    // Token the iframe uses for its Vampire calls (create /
+                    // add-note / tickets). Required — the preview is a true
+                    // token-in-hand test, not a baked-in value.
+                    vampireToken: inpToken.value.trim(),
+                    user: {
+                        id: u.id,
+                        firstName: u.firstName,
+                        lastName: u.lastName,
+                        email: u.email,
+                        // Free-typed — must match the name registered in the
+                        // ticketing backend EXACTLY, or Vampire returns
+                        // "Company not setup for external ticketing".
+                        companyName: inpCompany.value.trim(),
+                        allowTicketing: u.allowTicketing,
+                        ticketingDashboard: u.ticketingDashboard
+                    },
+                    categoryTree: MOCK_TREE
+                }
+            };
+        }
+
+        function sendInit() {
+            if (frame && frame.contentWindow) frame.contentWindow.postMessage(buildPayload(), '*');
+        }
+
+        // Load (or reload) the iframe — only once a token has been entered.
+        function loadPreview() {
+            if (!inpToken.value.trim()) {
+                gate.style.display = 'block';
+                frame.style.display = 'none';
+                inpToken.focus();
+                gate.querySelector('.lock').textContent = '⚠️';
+                return;
+            }
+            gate.style.display = 'none';
+            frame.style.display = 'block';
+            // Relative to this page so it works both locally and when deployed at
+            // /ticketing/preview.html. Cache-buster so dev edits always show.
+            frame.src = 'index.html?cb=' + (new Date().getTime());
+            // sendInit fires from the iframe's 'ticketing:ready' message below.
+        }
+
+        // The iframe announces 'ticketing:ready' when loaded; reply with init.
+        // Also auto-size the frame from 'ticketing:resize' like the real controller.
+        window.addEventListener('message', function (evt) {
+            var msg = evt.data || {};
+            if (msg.type === 'ticketing:ready') {
+                sendInit();
+            } else if (msg.type === 'ticketing:resize' && msg.height) {
+                frame.style.height = (msg.height + 24) + 'px';
+            }
+        });
+
+        document.getElementById('btn-load').addEventListener('click', loadPreview);
+
+        // Route the iframe's native alert()s to the console so error paths (e.g.
+        // a rejected ticket) don't pop blocking dialogs during preview. Init is
+        // driven solely by the iframe's 'ticketing:ready' message (like the real
+        // storefront), so we do NOT also send it here — that would double-fire
+        // getTickets on init.
+        frame.addEventListener('load', function () {
+            if (frame.src === 'about:blank') return;
+            try {
+                frame.contentWindow.alert = function (m) { console.log('[iframe alert]', m); };
+            } catch (e) { /* cross-origin: ignore */ }
+        });
+
+        // Init the controls only. The iframe stays blank (gated) until a token
+        // is entered and Load is clicked.
+        populateUsers();
+        inpColor.value = DEFAULT_COLOR;
+    </script>
+</body>
+</html>

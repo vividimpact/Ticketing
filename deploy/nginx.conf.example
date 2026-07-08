@@ -1,0 +1,43 @@
+# Example nginx server block for the ticketing directory on the app server.
+#
+# Single responsibility: serve the static iframe assets (public/) that the
+# storefronts embed. The files are plain static assets deployed from this repo
+# (git checkout / rsync) — there is no dynamic deploy receiver.
+#
+# Adapt server_name / roots to the app server's real layout. The example assumes
+# the repo is deployed at /var/www/ticketing on the host.
+#
+# TO CONFIRM (see PLAN.md):
+#   - Real app-server hostname (placeholder below is apps.vividimpact.com).
+#   - Whether this location is added to an existing server block instead of a
+#     standalone one (the app server already hosts other small apps, e.g. api).
+#   - Exact storefront origins for the CSP frame-ancestors allow-list.
+
+server {
+    listen 443 ssl;
+    server_name apps.vividimpact.com;   # TO CONFIRM
+
+    # --- TLS (managed elsewhere / by your existing config) ---
+    # ssl_certificate     /etc/ssl/...;
+    # ssl_certificate_key /etc/ssl/...;
+
+    # ---------------------------------------------------------------------
+    # Static iframe assets
+    #   https://apps.vividimpact.com/ticketing/  ->  /var/www/ticketing/public
+    # ---------------------------------------------------------------------
+    location /ticketing/ {
+        alias /var/www/ticketing/public/;
+        index index.html;
+        try_files $uri $uri/ =404;
+
+        # Allow the storefront origins to embed this page in an <iframe>.
+        # 'self' lets the same-origin preview harness (/ticketing/preview.html)
+        # frame index.html. Prefer CSP frame-ancestors over X-Frame-Options.
+        # TO CONFIRM: exact storefront origins.
+        add_header Content-Security-Policy "frame-ancestors 'self' https://*.four51.com;" always;
+
+        # Assets are versioned via ?v= query strings (see index.html), so they
+        # can be cached; bump the version on deploy to bust caches.
+        add_header Cache-Control "public, max-age=300";
+    }
+}

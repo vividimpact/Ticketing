@@ -1,0 +1,225 @@
+/*
+ * ticketing.css — standalone styles for the iframe.
+ *
+ * Goal: render the support-ticket view so it looks the SAME as the legacy
+ * per-storefront partials/supportTicket.html, which relied on Bootstrap 3 +
+ * the storefront's custom.css. To stay self-contained (one copy serves every
+ * storefront), we reproduce the relevant Bootstrap 3.3.7 component values here
+ * instead of pulling in the whole framework.
+ *
+ * The one thing that legitimately differs per storefront — the brand color that
+ * used to come from the platform theme (btn-centerwell) and the ticket banner —
+ * is supplied by the parent via ticketing:init and applied through --brand-theme
+ * (see ticketing.js applyThemeColor). No color passed -> the fallbacks below.
+ */
+
+:root {
+  --brand: #333333;        /* create-modal header (storefront inline #333333) */
+  --note-brand: #53cfe7;   /* add-note modal header (storefront inline #53cfe7) */
+  --success: #5cb85c;      /* Bootstrap 3 btn-success */
+  --success-border: #4cae4c;
+  --danger: #d9534f;       /* Bootstrap 3 btn-danger */
+  --danger-border: #d43f3a;
+  --primary: #337ab7;      /* Bootstrap 3 btn-primary */
+  --primary-border: #2e6da4;
+  --border: #cccccc;       /* Bootstrap 3 input border */
+  --table-border: #dddddd;
+  --text: #333333;
+  /* --brand-theme is set at runtime from the storefront's color. */
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.42857143;
+  color: var(--text);
+  background: #ffffff;
+}
+
+.ticketing { padding: 16px; }
+
+/* ----- Home header (mirrors the storefront section markup) ----- */
+.section-head { text-align: center; }
+.section-head h1 { font-size: 36px; font-weight: 500; margin: 0 0 12px; }
+.ticket-intro {
+  list-style: none;
+  margin: 0 auto 15px;
+  padding: 0;
+}
+.ticket-intro li { margin-bottom: 15px; }
+
+.notice {
+  border: 1px solid var(--table-border);
+  border-left: 4px solid var(--danger);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: #fdf7f7;
+  text-align: center;
+}
+
+/* ----- Buttons (Bootstrap 3.3.7 values) ----- */
+.btn {
+  display: inline-block;
+  margin-bottom: 0;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 1.42857143;
+  cursor: pointer;
+  color: #fff;
+}
+.btn-primary { background-color: var(--primary); border-color: var(--primary-border); }
+.btn-primary:hover { background-color: #286090; border-color: #204d74; }
+.btn-success { background-color: var(--success); border-color: var(--success-border); }
+.btn-success:hover { background-color: #449d44; border-color: #398439; }
+.btn-danger  { background-color: var(--danger);  border-color: var(--danger-border); }
+.btn-danger:hover { background-color: #c9302c; border-color: #ac2925; }
+
+/* Brand button (was btn-centerwell): background comes from the storefront. */
+.btn-brand {
+  background-color: var(--brand-theme, #337ab7);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #fff;
+}
+.btn-brand:hover { filter: brightness(0.92); }
+
+/* ----- Ticket list ----- */
+.tickets-container { margin-top: 24px; padding: 25px 0; }
+.ticket-request-banner {
+  background-color: var(--brand-theme, #000000);
+  color: #ffffff;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  text-align: center;
+  margin: 0 0 12px;
+}
+.table { width: 100%; max-width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+.table th, .table td {
+  padding: 8px;
+  line-height: 1.42857143;
+  vertical-align: top;
+  border-top: 1px solid var(--table-border);
+  text-align: left;
+}
+.table thead th {
+  vertical-align: bottom;
+  border-bottom: 2px solid var(--table-border);
+  border-top: 0;
+}
+.table tbody tr:nth-child(odd) { background-color: #f9f9f9; }
+.notes { margin-bottom: 8px; }
+.notes pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 2px 0 0;
+  font-family: inherit;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+/* ----- Forms (Bootstrap 3.3.7 form-control) ----- */
+.field-label { display: block; margin: 20px 0 4px; font-weight: 700; }
+.modal-body h4 { margin: 0 0 6px; font-size: 18px; font-weight: 500; }
+.form-control,
+select,
+textarea {
+  display: block;
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 1.42857143;
+  color: #555;
+  background-color: #fff;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+textarea { resize: vertical; }
+.radio {
+  display: inline-block;
+  min-height: initial;
+  margin-right: 16px;
+  font-weight: 400;
+}
+.radio input { display: inline-block; margin-right: .25em; }
+.text-danger { color: #a94442; font-size: 0.85rem; }
+hr { border: 0; border-top: 1px solid #eee; margin: 16px 0; }
+
+/* Conditional field groups: hidden until their request type is selected. */
+.option-div { display: none; }
+.option-div.active { display: block; }
+
+/* select2 tweaks carried over from the storefront custom.css */
+.select2-selection__choice__remove { min-height: unset; }
+.select2-selection { display: flex !important; }
+.select2-search__field { min-height: unset !important; margin-bottom: 5px; }
+
+/* ----- Modal (matches the storefront's Bootstrap 3 modal appearance) ----- */
+.modal {
+  position: fixed;
+  inset: 0;
+  /* storefront used inline background-color: #d3d3d37d */
+  background-color: rgba(211, 211, 211, 0.49);
+  overflow-y: auto;
+  padding: 30px 12px;
+  z-index: 1050;
+}
+.modal[hidden] { display: none; }
+.modal-dialog { width: 600px; max-width: 100%; margin: 0 auto; }
+.modal-content {
+  position: relative;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+.modal-header {
+  padding: 15px;
+  color: #fff;
+  background: var(--brand);
+  border-radius: 5px 5px 0 0;
+  text-align: center;
+}
+.modal-header.note { background: var(--note-brand); }
+.modal-title { margin: 0; font-size: 30px; font-weight: 500; }
+.modal-header.note .modal-title { font-size: 18px; }
+.modal-subtitle { font-size: small; font-style: italic; text-align: center; margin: 8px 0 0; }
+.modal-body { padding: 15px; text-align: left; }
+.modal-footer { padding: 15px 0 0; text-align: right; }
+.action-buttons { display: inline-flex; gap: 5px; }
+.working-message { font-style: italic; }
+
+/* ----- Fatal load-error popup (invalid token / company) ----- */
+.ticketing-error {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(211, 211, 211, 0.49);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1100;
+}
+.ticketing-error[hidden] { display: none; }
+.ticketing-error-box {
+  max-width: 460px;
+  width: 100%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-top: 4px solid var(--danger);
+  border-radius: 6px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  padding: 20px 24px;
+  text-align: center;
+}
+.ticketing-error-box h2 { margin: 0 0 10px; font-size: 20px; color: #b02a37; }
+.ticketing-error-help { font-size: 13px; color: #666; margin-top: 12px; }
