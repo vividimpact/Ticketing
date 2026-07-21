@@ -57,7 +57,8 @@
   // locally and once deployed — without loosening this list.
   // TO CONFIRM: add any storefront custom domains that are not *.four51.com.
   var ALLOWED_PARENT_ORIGINS = [
-    'https://*.four51.com'
+    'https://*.four51.com',
+    'https://*.four51ordercloud.com'
   ];
 
   var MAX_UPLOAD_MB = 35;
