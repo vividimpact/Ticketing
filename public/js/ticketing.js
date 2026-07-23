@@ -58,7 +58,8 @@
   // TO CONFIRM: add any storefront custom domains that are not *.four51.com.
   var ALLOWED_PARENT_ORIGINS = [
     'https://*.four51.com',
-    'https://*.four51ordercloud.com'
+    'https://*.four51ordercloud.com',
+    'https://psfin.atriacom.com:17107'
   ];
 
   var MAX_UPLOAD_MB = 35;
@@ -126,7 +127,8 @@
   }
 
   function wireEvents() {
-    document.getElementById('btn-open-create').addEventListener('click', openCreate);
+    var openBtn = document.getElementById('btn-open-create');
+    if (openBtn) openBtn.addEventListener('click', openCreate);
     els.requestType.addEventListener('change', onRequestTypeChange);
     els.frmTicket.addEventListener('submit', onCreateSubmit);
     els.frmNote.addEventListener('submit', onNoteSubmit);
@@ -263,14 +265,26 @@
   // ----- Modals -------------------------------------------------------------
   function openCreate() {
     if (!state.user || state.user.allowTicketing !== true) {
-      alert('User is not set up to enter support tickets.');
+      showNotice('Your account is not set up to enter support tickets. If you believe this is an error, please reach out to us.');
       return;
     }
+    if (!els.createModal) return;
     els.frmTicket.reset();
     onRequestTypeChange();
     setWorking(els.createModal, false);
     els.createModal.hidden = false;
     reportHeight();
+  }
+
+  // In-iframe notice — alert()/confirm() are silently suppressed inside a
+  // cross-origin iframe, so user feedback must render in the page instead.
+  function showNotice(msg) {
+    if (els.notAllowed) {
+      var p = els.notAllowed.querySelector('p');
+      if (p) p.textContent = msg;
+      els.notAllowed.hidden = false;
+      reportHeight();
+    }
   }
 
   function openNote(uniqueId) {
