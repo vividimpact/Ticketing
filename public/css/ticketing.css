@@ -163,15 +163,20 @@ hr { border: 0; border-top: 1px solid #eee; margin: 16px 0; }
 .select2-selection { display: flex !important; }
 .select2-search__field { min-height: unset !important; margin-bottom: 5px; }
 
-/* ----- Modal (matches the storefront's Bootstrap 3 modal appearance) ----- */
+/* ----- Modal -----
+   IMPORTANT: this UI runs inside an auto-height iframe embedded in the
+   storefront. A position:fixed overlay pins to the iframe's own box (which the
+   parent sizes to content), so an opened modal ends up clipped/off-screen and
+   looks like "nothing happened". Instead we render the modal IN-FLOW: when shown
+   it adds to the document height, reportHeight() grows the iframe, and the form
+   appears inline right below the Create button — reliably visible at any nesting
+   depth. A translucent panel background keeps the modal feel. */
 .modal {
-  position: fixed;
-  inset: 0;
-  /* storefront used inline background-color: #d3d3d37d */
-  background-color: rgba(211, 211, 211, 0.49);
-  overflow-y: auto;
-  padding: 30px 12px;
-  z-index: 1050;
+  position: relative;
+  background-color: rgba(211, 211, 211, 0.30);
+  padding: 20px 12px;
+  margin-top: 12px;
+  border-radius: 6px;
 }
 .modal[hidden] { display: none; }
 .modal-dialog { width: 600px; max-width: 100%; margin: 0 auto; }
@@ -198,16 +203,13 @@ hr { border: 0; border-top: 1px solid #eee; margin: 16px 0; }
 .action-buttons { display: inline-flex; gap: 5px; }
 .working-message { font-style: italic; }
 
-/* ----- Fatal load-error popup (invalid token / company) ----- */
+/* ----- Fatal load-error popup (invalid token / company) -----
+   In-flow (not fixed) for the same iframe-embedding reason as .modal above. */
 .ticketing-error {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(211, 211, 211, 0.49);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  z-index: 1100;
 }
 .ticketing-error[hidden] { display: none; }
 .ticketing-error-box {
