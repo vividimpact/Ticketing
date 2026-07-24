@@ -59,7 +59,8 @@
   var ALLOWED_PARENT_ORIGINS = [
     'https://*.four51.com',
     'https://*.four51ordercloud.com',
-    'https://psfin.atriacom.com:17107'
+    'https://psfin.atriacom.com:17107',
+    'https://www.shopgentivahs.com'
   ];
 
   var MAX_UPLOAD_MB = 35;
