@@ -43,11 +43,21 @@
   // that token means no new Vampire application is required.
   var VAMPIRE_TOKEN = '';
 
-  // Vampire base URLs. Production uses the main host; test/demo uses the
-  // dedicated test host (vampiretest) — the defined route for testing and demos.
+  // Vampire base URLs. These are ROOT-RELATIVE paths served by the app server
+  // (apps.vividimpact.com), which reverse-proxies them to Vampire server-side
+  // (see deploy/nginx.conf.example: location /vampire/api/ and /vampire/api-test/).
+  //
+  // Why not call vampire.vividimpact.com directly? On the corporate network that
+  // host resolves to a private/loopback IP. A public-origin page calling a
+  // local-network address is blocked by Chrome 142+ Local Network Access (LNA,
+  // which replaced Private Network Access) unless the user grants a permission
+  // prompt — and Firefox behaves differently. Routing through the same origin as
+  // the iframe means the browser only ever talks to a public host (apps), nginx
+  // reaches Vampire's local IP server-side (LNA does not apply to server-to-server
+  // requests), and because the call is now same-origin there is no CORS at all.
   var VAMPIRE_BASE = {
-    production: 'https://vampire.vividimpact.com/api',
-    test: 'https://vampiretest.vividimpact.com/api-test'
+    production: '/vampire/api',
+    test: '/vampire/api-test'
   };
 
   // Cross-origin parents allowed to initialize this iframe. Entries may use a
@@ -59,7 +69,9 @@
   var ALLOWED_PARENT_ORIGINS = [
     'https://*.four51.com',
     'https://*.four51ordercloud.com',
-    'https://psfin.atriacom.com:17107'
+    'https://psfin.atriacom.com:17107',
+    'https://www.shopgentivahs.com',
+    'https://www.creativehouseorders.com'
   ];
 
   var MAX_UPLOAD_MB = 35;
