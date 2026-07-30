@@ -547,6 +547,7 @@
   function post(msg) {
     if (window.parent !== window) window.parent.postMessage(msg, '*');
   }
+  var __lastReportedHeight = -1;
   function reportHeight() {
     var h;
     if (els.ticketingError && !els.ticketingError.hidden) {
@@ -556,6 +557,13 @@
       var appEl = document.getElementById('app');
       h = appEl ? appEl.scrollHeight : document.body.scrollHeight;
     }
+    // Idempotency guard: only post when the height meaningfully changed. Without
+    // this, the parent resizing the iframe fires the iframe's own 'resize' event,
+    // which calls reportHeight again — a feedback loop that Chrome storms on (and
+    // freezes) while Firefox happens to settle. The 2px tolerance absorbs
+    // scrollbar/sub-pixel jitter so the exchange always terminates.
+    if (Math.abs(h - __lastReportedHeight) <= 2) return;
+    __lastReportedHeight = h;
     post({ type: 'ticketing:resize', height: h });
   }
 })();
