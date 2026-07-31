@@ -43,21 +43,19 @@
   // that token means no new Vampire application is required.
   var VAMPIRE_TOKEN = '';
 
-  // Vampire base URLs. These are ROOT-RELATIVE paths served by the app server
-  // (apps.vividimpact.com), which reverse-proxies them to Vampire server-side
-  // (see deploy/nginx.conf.example: location /vampire/api/ and /vampire/api-test/).
+  // Vampire base URLs. The iframe calls Vampire directly (same host, differing
+  // only by path: /api for production, /api-test for test — matching the legacy
+  // storefront controller).
   //
-  // Why not call vampire.vividimpact.com directly? On the corporate network that
-  // host resolves to a private/loopback IP. A public-origin page calling a
-  // local-network address is blocked by Chrome 142+ Local Network Access (LNA,
-  // which replaced Private Network Access) unless the user grants a permission
-  // prompt — and Firefox behaves differently. Routing through the same origin as
-  // the iframe means the browser only ever talks to a public host (apps), nginx
-  // reaches Vampire's local IP server-side (LNA does not apply to server-to-server
-  // requests), and because the call is now same-origin there is no CORS at all.
+  // NOTE: calling vampire.vividimpact.com directly means that on networks where
+  // that host resolves to a private/LAN IP, Chrome 142+ Local Network Access
+  // (LNA) blocks the request unless the user grants the local-network permission
+  // prompt. (Firefox does not enforce LNA.) The app-server reverse proxy
+  // (/vampire/api*) avoids this by keeping the browser call same-origin; switch
+  // back to the relative '/vampire/api' bases if LNA becomes a problem.
   var VAMPIRE_BASE = {
-    production: '/vampire/api',
-    test: '/vampire/api-test'
+    production: 'https://vampire.vividimpact.com/api',
+    test: 'https://vampire.vividimpact.com/api-test'
   };
 
   // Cross-origin parents allowed to initialize this iframe. Entries may use a
