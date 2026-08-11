@@ -72,6 +72,15 @@
     'https://www.creativehouseorders.com'
   ];
 
+  // Max attachment size, in MB. Matches the legacy storefront form, which sent
+  // up to 35 MB straight to Vampire successfully — the backend accepts this.
+  //
+  // The file is base64-encoded inside a form field (~33% inflation), so a 35 MB
+  // file is ~47 MB on the wire. Any layer IN FRONT of Vampire must allow at least
+  // that: Vampire itself is fine (client_max_body_size / post_max_size = 100M),
+  // but a reverse proxy must not cap lower. The apps `/vampire/` proxy's 40m cap
+  // was what broke large attachments after the iframe migration — calling Vampire
+  // directly (VAMPIRE_BASE above) avoids that proxy, so its 100M limit applies.
   var MAX_UPLOAD_MB = 35;
 
   // ----- State --------------------------------------------------------------
@@ -134,6 +143,9 @@
     els.categorySelect = document.querySelector('#frm-ticket select[name="category"]');
     els.upload = document.getElementById('ticketUpload');
     els.uploadError = document.getElementById('upload-error');
+    els.flash = document.getElementById('ticket-flash');
+    // Keep the on-screen size limit text in sync with MAX_UPLOAD_MB.
+    if (els.uploadError) els.uploadError.textContent = 'Files must not exceed ' + MAX_UPLOAD_MB + ' MB';
   }
 
   function wireEvents() {
@@ -286,6 +298,30 @@
     reportHeight();
   }
 
+  // In-iframe flash message for submit results (success/error). alert() is
+  // silently suppressed inside a cross-origin iframe, so all user feedback must
+  // render in the page. isError toggles error styling. Auto-clears on success.
+  function flash(msg, isError) {
+    if (!els.flash) return;
+    // Cancel any pending auto-hide first, so a prior success banner's timeout
+    // can't hide a later message. Example: create succeeds (success banner,
+    // 8s timer scheduled), then the follow-up getTickets() fails (error banner)
+    // — without this, the success timer would prematurely hide the error.
+    window.clearTimeout(flash._t);
+    flash._t = null;
+    els.flash.textContent = msg;
+    els.flash.classList.toggle('error', !!isError);
+    els.flash.hidden = false;
+    reportHeight();
+    if (!isError) {
+      flash._t = window.setTimeout(function () {
+        els.flash.hidden = true;
+        flash._t = null;
+        reportHeight();
+      }, 8000);
+    }
+  }
+
   // In-iframe notice — alert()/confirm() are silently suppressed inside a
   // cross-origin iframe, so user feedback must render in the page instead.
   function showNotice(msg) {
@@ -299,7 +335,7 @@
 
   function openNote(uniqueId) {
     if (!state.user || state.user.allowTicketing !== true) {
-      alert('User is not set up to enter support tickets.');
+      showNotice('Your account is not set up to enter support tickets.');
       return;
     }
     els.frmNote.reset();
@@ -325,7 +361,17 @@
     e.preventDefault();
     var f = els.frmTicket;
     var description = val(f, 'description');
-    if (!description) { alert('Please provide a description.'); return; }
+    if (!description) { flash('Please provide a description.', true); return; }
+
+    // Block oversized attachments up front (before submitting) so the user gets
+    // a clear message instead of the backend rejecting it as "file size is too
+    // big" — or the ticket silently submitting without the attachment.
+    var file = els.upload && els.upload.files && els.upload.files[0];
+    if (file && file.size > MAX_UPLOAD_MB * 1024 * 1024) {
+      els.uploadError.hidden = false;
+      flash('That attachment is too large. Files must not exceed ' + MAX_UPLOAD_MB + ' MB.', true);
+      return;
+    }
 
     var categories = els.categorySelect
       ? Array.prototype.map.call(els.categorySelect.selectedOptions, function (o) { return o.value; })
@@ -364,16 +410,16 @@
         if (isValid(result, 'TicketNumber')) {
           if (result.Code === 0) {
             getTickets();
-            alert('Support ticket ' + result.Content.TicketNumber + ' has been created.');
+            flash('Support ticket ' + result.Content.TicketNumber + ' has been created.');
           } else {
-            alert('Error creating support ticket: ' + result.Message);
+            flash('Error creating support ticket: ' + result.Message, true);
           }
         } else {
-          alert(invalidMsg('create a support ticket'));
+          flash(invalidMsg('create a support ticket'), true);
         }
         closeModals();
-      }, function () {
-        alert(unknownMsg('create a support ticket'));
+      }, function (xhr) {
+        flash(submitErrorMessage(xhr, 'create a support ticket'), true);
         closeModals();
       });
     });
@@ -383,7 +429,7 @@
   function onNoteSubmit(e) {
     e.preventDefault();
     var description = val(els.frmNote, 'description');
-    if (!description) { alert('Please provide a description.'); return; }
+    if (!description) { flash('Please provide a description.', true); return; }
 
     var data = compact({
       companyName: user('companyName'),
@@ -402,16 +448,16 @@
       if (isValid(result)) {
         if (result.Code === 0) {
           getTickets();
-          alert('Support ticket has been updated.');
+          flash('Support ticket has been updated.');
         } else {
-          alert('Error creating support ticket note: ' + result.Message);
+          flash('Error creating support ticket note: ' + result.Message, true);
         }
       } else {
-        alert(invalidMsg('create a support ticket note'));
+        flash(invalidMsg('create a support ticket note'), true);
       }
       closeModals();
-    }, function () {
-      alert(unknownMsg('create a support ticket note'));
+    }, function (xhr) {
+      flash(submitErrorMessage(xhr, 'create a support ticket note'), true);
       closeModals();
     });
   }
@@ -433,14 +479,14 @@
         renderTickets(result.Content.Tickets || []);
       } else if (isValid(result, 'Tickets')) {
         if (initial) { showLoadError('Error loading support tickets: ' + result.Message); return; }
-        alert('Error loading support tickets: ' + result.Message);
+        flash('Error loading support tickets: ' + result.Message, true);
       } else {
         if (initial) { showLoadError(invalidMsg('load support tickets')); return; }
-        alert(invalidMsg('load support tickets'));
+        flash(invalidMsg('load support tickets'), true);
       }
     }, function (xhr) {
       if (initial) { showLoadError(loadErrorMessage(xhr)); return; }
-      alert(unknownMsg('load support tickets'));
+      flash(unknownMsg('load support tickets'), true);
     });
   }
 
@@ -453,6 +499,20 @@
       return xhr.responseJSON.Message;   // e.g. "Company not setup for external ticketing."
     }
     return unknownMsg('load support tickets');
+  }
+
+  // Friendly message for a failed create/note submit. A 413 means the request
+  // body (mostly the base64 attachment) exceeded a size limit in front of the
+  // backend; surface that clearly, then any backend Message, then a generic one.
+  function submitErrorMessage(xhr, action) {
+    if (xhr && xhr.status === 413) {
+      return 'Your attachment is too large to submit. Please attach a smaller file (under ' +
+        MAX_UPLOAD_MB + ' MB) and try again.';
+    }
+    if (xhr && xhr.responseJSON && xhr.responseJSON.Message) {
+      return xhr.responseJSON.Message;
+    }
+    return unknownMsg(action);
   }
 
   function renderTickets(tickets) {
