@@ -303,14 +303,20 @@
   // render in the page. isError toggles error styling. Auto-clears on success.
   function flash(msg, isError) {
     if (!els.flash) return;
+    // Cancel any pending auto-hide first, so a prior success banner's timeout
+    // can't hide a later message. Example: create succeeds (success banner,
+    // 8s timer scheduled), then the follow-up getTickets() fails (error banner)
+    // — without this, the success timer would prematurely hide the error.
+    window.clearTimeout(flash._t);
+    flash._t = null;
     els.flash.textContent = msg;
     els.flash.classList.toggle('error', !!isError);
     els.flash.hidden = false;
     reportHeight();
     if (!isError) {
-      window.clearTimeout(flash._t);
       flash._t = window.setTimeout(function () {
         els.flash.hidden = true;
+        flash._t = null;
         reportHeight();
       }, 8000);
     }
