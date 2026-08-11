@@ -8,7 +8,7 @@
     <!-- Third-party assets. Pin to versions the storefronts already use. -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
-    <link rel="stylesheet" href="public/css/ticketing.css?v=6">
+    <link rel="stylesheet" href="public/css/ticketing.css?v=7">
 </head>
 <body>
 <!--
@@ -24,6 +24,9 @@
         <p>Your account is not set up to enter support tickets. If you believe this
            is an error, please email <a href="mailto:orders@vividimpact.com">orders@vividimpact.com</a>.</p>
     </div>
+
+    <!-- In-page feedback for submit results (alert() is suppressed in iframes) -->
+    <div id="ticket-flash" class="flash" hidden></div>
 
     <section id="ticket-home">
         <header class="section-head">
@@ -210,6 +213,6 @@
 <!-- jQuery + select2 (match storefront versions). ticketing.js is plain JS + jQuery. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-<script src="public/js/ticketing.js?v=15"></script>
+<script src="public/js/ticketing.js?v=16"></script>
 </body>
 </html>
