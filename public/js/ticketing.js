@@ -69,7 +69,8 @@
     'https://*.four51ordercloud.com',
     'https://psfin.atriacom.com:17107',
     'https://www.shopgentivahs.com',
-    'https://www.creativehouseorders.com'
+    'https://www.creativehouseorders.com',
+    'https://creativehouseprinting.com'
   ];
 
   // Max attachment size, in MB. Matches the legacy storefront form, which sent
